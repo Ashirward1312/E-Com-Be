@@ -1,7 +1,7 @@
 from django.urls import path
-from .views import AddToCartView, ViewCartView, RemoveFromCartView, UpdateCartItemView,ApplyCouponView
+from .views import AddToCartView, ViewCartView, RemoveFromCartView, UpdateCartItemView,ApplyCouponView,AdminCustomerOrdersView
 from .views import CheckoutView
-from .views import OrderListView, OrderDetailView,CancelOrderView,AdminUpdateOrderStatus
+from .views import OrderListView, OrderDetailView,CancelOrderView,AdminUpdateOrderStatus,AdminOrderListView,AdminCustomerListView
 urlpatterns = [
     path('add/', AddToCartView.as_view(), name='add-to-cart'),
     path('', ViewCartView.as_view(), name='view-cart'),
@@ -13,4 +13,7 @@ urlpatterns = [
     path("apply-coupon/", ApplyCouponView.as_view(), name="apply-coupon"),
     path("orders/<int:pk>/cancel/", CancelOrderView.as_view()),
     path("admin/orders/<int:pk>/status/", AdminUpdateOrderStatus.as_view()),
+    path("admin/orders/", AdminOrderListView.as_view()),
+    path("admin/customers/", AdminCustomerListView.as_view()),
+    path("admin/customer-orders/<int:pk>/", AdminCustomerOrdersView.as_view()),
 ]

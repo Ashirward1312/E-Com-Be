@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAdminUser, AllowAny
 from .models import Product
 from .serializers import ProductSerializer, CouponSerializer
 from .models import Coupon
+from rest_framework.generics import ListCreateAPIView
 
 
 class ProductListCreateView(generics.ListCreateAPIView):
@@ -30,5 +31,10 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class CouponCreateView(generics.CreateAPIView):
     queryset = Coupon.objects.all()
+    serializer_class = CouponSerializer
+    permission_classes = [IsAdminUser]
+
+class AdminCouponListCreateView(ListCreateAPIView):
+    queryset = Coupon.objects.all().order_by("-id")
     serializer_class = CouponSerializer
     permission_classes = [IsAdminUser]
