@@ -1,81 +1,79 @@
 from rest_framework import serializers
 from .models import Cart, CartItem
-from products.models import Product
-from .models import Order, OrderItem
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source='product.name', read_only=True)
-    product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    product_name = serializers.CharField(
+        source="product.name",
+        read_only=True,
+    )
+
+    product_price = serializers.DecimalField(
+        source="product.price",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+    )
+
+    product_image = serializers.SerializerMethodField()
+
     subtotal = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'product_name', 'product_price', 'quantity', 'subtotal']
+        fields = [
+            "id",
+            "product",
+            "product_name",
+            "product_price",
+            "product_image",
+            "quantity",
+            "subtotal",
+        ]
+
+    def get_product_image(self, obj):
+        request = self.context.get("request")
+
+        if obj.product.image:
+            if request:
+                return request.build_absolute_uri(
+                    obj.product.image.url
+                )
+            return obj.product.image.url
+
+        return None
 
     def get_subtotal(self, obj):
         return obj.product.price * obj.quantity
 
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, read_only=True)
+    items = CartItemSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    total_items = serializers.SerializerMethodField()
+
     total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'items', 'total_price']
-
-    def get_total_price(self, obj):
-        total = 0
-        for item in obj.items.all():
-            total += item.product.price * item.quantity
-        return total
-
-
-class OrderItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source='product.name', read_only=True)
-
-    class Meta:
-        model = OrderItem
-        fields = ['id', 'product', 'product_name', 'quantity', 'price']
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Order
-        # ✅ Include all fields needed by frontend
         fields = [
-            'id', 'user', 'total_price', 'discount_amount',
-            'final_price', 'status', 'created_at', 'items'
+            "id",
+            "items",
+            "total_items",
+            "total_price",
         ]
 
-class OrderItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source='product.name', read_only=True)
+    def get_total_items(self, obj):
+        return sum(
+            item.quantity
+            for item in obj.items.all()
+        )
 
-    class Meta:
-        model = OrderItem
-        fields = ['id', 'product_name', 'quantity', 'price']
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Order
-        fields = [
-            'id',
-            'order_id',
-            'full_name',
-            'phone',
-            'email',
-            'address',
-            'total_price',
-            'discount_amount',
-            'final_price',
-            'status',
-            'payment_status',
-            'created_at',
-            'items',
-        ]        
+    def get_total_price(self, obj):
+        return sum(
+            item.product.price * item.quantity
+            for item in obj.items.all()
+        )
