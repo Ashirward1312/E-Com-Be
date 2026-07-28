@@ -11,6 +11,7 @@ from rest_framework.exceptions import NotFound
 from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser
+from django.db.models import Q
 
 
 from cart.models import Cart
@@ -20,6 +21,13 @@ from .models import (
     OrderStatusHistory,
 )
 from .serializers import OrderSerializer
+
+from decimal import Decimal
+
+from rest_framework.permissions import IsAdminUser
+
+from accounts.models import User
+from products.models import Product
 
 
 class CheckoutView(APIView):
@@ -119,10 +127,11 @@ class CheckoutView(APIView):
 
         return Response(
             {
-                "message": "Order placed successfully.",
-                "order": serializer.data,
+                "message":"Order placed successfully.",
+                "order":serializer.data,
+                "order_id":order.order_id
             },
-            status=status.HTTP_201_CREATED,
+        status=status.HTTP_201_CREATED
         )
 
 
@@ -156,9 +165,9 @@ class OrderDetailView(RetrieveAPIView):
                     "status_history",
                 )
                 .get(
-                    id=self.kwargs["order_id"],
-                    user=self.request.user,
-                )
+                order_id=self.kwargs["order_id"],
+                user=self.request.user,
+                  )
             )
         except Order.DoesNotExist:
             raise NotFound("Order not found.")
@@ -242,8 +251,11 @@ class AdminOrderListView(ListAPIView):
             queryset = queryset.filter(payment_method=payment_method)
 
         if search:
-            queryset = queryset.filter(
-                order_id__icontains=search
+            queryset=queryset.filter(
+            Q(order_id__icontains=search)|
+            Q(full_name__icontains=search)|
+            Q(phone__icontains=search)|
+            Q(email__icontains=search)
             )
 
         return queryset
@@ -280,6 +292,7 @@ class AdminOrderDetailView(RetrieveAPIView):
         
 
 class UpdateOrderStatusView(APIView):
+
     permission_classes = [IsAdminUser]
 
     ALLOWED_STATUS = [
@@ -333,3 +346,40 @@ class UpdateOrderStatusView(APIView):
             },
             status=status.HTTP_200_OK,
         )        
+
+
+
+class AdminDashboardView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+
+        total_products = Product.objects.filter(
+            is_active=True
+        ).count()
+
+        total_orders = Order.objects.count()
+
+        total_users = User.objects.count()
+
+        total_revenue = (
+            Order.objects.filter(
+                payment_status="paid"
+            )
+            .values_list(
+                "final_price",
+                flat=True,
+            )
+        )
+
+        revenue = sum(
+            total_revenue,
+            Decimal("0.00"),
+        )
+
+        return Response({
+            "total_products": total_products,
+            "total_orders": total_orders,
+            "total_users": total_users,
+            "total_revenue": revenue,
+        })    
