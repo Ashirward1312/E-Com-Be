@@ -3,11 +3,18 @@ from .models import Product, Category, ProductImage, Coupon
 
 
 class CategorySerializer(serializers.ModelSerializer):
+
+    product_count = serializers.IntegerField(
+        source="products.count",
+        read_only=True,
+    )
+
     class Meta:
         model = Category
         fields = [
             "id",
             "name",
+            "product_count",
         ]
 
 
@@ -15,7 +22,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
 
     class Meta:
-        model = ProductImage    
+        model = ProductImage
         fields = [
             "id",
             "image",
@@ -66,7 +73,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "description",
             "price",
             "stock",
-           "image",
+            "image",
             "upload_image",
             "images",
             "is_active",
@@ -79,16 +86,16 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
     def get_image(self, obj):
-            request = self.context.get("request")
-    
-            if obj.image:
-                if request:
-                    return request.build_absolute_uri(obj.image.url)
-                return obj.image.url
-    
-            return None
-        
+        request = self.context.get("request")
+
+        if obj.image:
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+
+        return None
 
 
 class CouponSerializer(serializers.ModelSerializer):

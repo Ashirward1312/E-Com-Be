@@ -1,6 +1,6 @@
 
 
-from rest_framework import generics
+from rest_framework import generics,status
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -11,6 +11,7 @@ from .serializers import (
     CouponSerializer,
     ProductSerializer,
 )
+from rest_framework.response import Response
 
 
 class CategoryListView(generics.ListAPIView):
@@ -105,3 +106,37 @@ class AdminCouponListCreateView(generics.ListCreateAPIView):
     queryset = Coupon.objects.all().order_by("-id")
     serializer_class = CouponSerializer
     permission_classes = [IsAdminUser]
+
+
+
+class AdminCategoryListCreateView(generics.ListCreateAPIView):
+    queryset = Category.objects.all().order_by("name")
+    serializer_class = CategorySerializer
+    permission_classes = [IsAdminUser]
+
+
+
+class AdminCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAdminUser]
+
+    def destroy(self, request, *args, **kwargs):
+        category = self.get_object()
+
+        if category.products.exists():
+            return Response(
+                {
+                    "message": "Cannot delete category because it contains products."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        self.perform_destroy(category)
+
+        return Response(
+            {
+                "message": "Category deleted successfully."
+            },
+            status=status.HTTP_200_OK,
+        )

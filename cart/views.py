@@ -1,3 +1,6 @@
+from .serializers import CartSyncSerializer
+from rest_framework.exceptions import ValidationError
+from django.db import transaction
 from rest_framework import status
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.generics import (
@@ -15,11 +18,13 @@ from .models import Cart, CartItem
 from .serializers import (
     CartItemSerializer,
     CartSerializer,
+    CartSyncSerializer
 )
 
 
+
 class AddToCartView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def post(self, request):
 
@@ -126,3 +131,59 @@ class ClearCartView(APIView):
         cart.items.all().delete()
 
         return Response({"message": "Cart cleared successfully."})
+
+
+class CartSyncView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+
+        items = request.data.get("items", [])
+
+        if not items:
+            raise ValidationError("Cart is empty.")
+
+        serializer = CartSyncSerializer(
+            data=items,
+            many=True,
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        cart, _ = Cart.objects.get_or_create(
+            user=request.user
+        )
+
+        # Purana cart hata do
+        cart.items.all().delete()
+
+        for item in serializer.validated_data:
+
+            try:
+                product = Product.objects.get(
+                    id=item["product_id"],
+                    is_active=True,
+                )
+            except Product.DoesNotExist:
+                raise ValidationError(
+                    f"Product {item['product_id']} not found."
+                )
+
+            if item["quantity"] > product.stock:
+                raise ValidationError(
+                    f"Only {product.stock} item(s) available for {product.name}."
+                )
+
+            CartItem.objects.create(
+                cart=cart,
+                product=product,
+                quantity=item["quantity"],
+            )
+
+        return Response(
+            {
+                "message": "Cart synced successfully."
+            },
+            status=status.HTTP_200_OK,
+        )

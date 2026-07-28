@@ -6,6 +6,7 @@ from .views import (
     UpdateCartItemView,
     RemoveFromCartView,
     ClearCartView,
+    CartSyncView
 )
 
 urlpatterns = [
@@ -38,4 +39,6 @@ urlpatterns = [
         ClearCartView.as_view(),
         name="clear-cart",
     ),
+
+    path("sync/", CartSyncView.as_view(), name="sync-cart",),
 ]

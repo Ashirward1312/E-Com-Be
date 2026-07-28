@@ -46,6 +46,9 @@ class CartItemSerializer(serializers.ModelSerializer):
     def get_subtotal(self, obj):
         return obj.product.price * obj.quantity
 
+class CartSyncSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1)
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(

@@ -9,6 +9,8 @@ from .views import (
     LoginView,
     ProfileView,
     UpdateProfileView,
+    AdminUserListView,
+    AdminUserDetailView,
 )
 
 urlpatterns = [
@@ -36,5 +38,17 @@ urlpatterns = [
         "profile/update/",
         UpdateProfileView.as_view(),
         name="update-profile",
+    ),
+
+    path(
+        "admin/users/",
+        AdminUserListView.as_view(),
+        name="admin-users",
+    ),
+
+    path(
+        "admin/users/<int:pk>/",
+        AdminUserDetailView.as_view(),
+        name="admin-user-detail",
     ),
 ]
