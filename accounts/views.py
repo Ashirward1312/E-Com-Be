@@ -10,6 +10,9 @@ from .serializers import (
     ProfileSerializer,
     UpdateProfileSerializer,
 )
+from rest_framework.views import APIView
+from orders.models import Order
+
 
 
 class RegisterView(generics.CreateAPIView):
@@ -42,6 +45,7 @@ class AdminUserListView(generics.ListAPIView):
 
 
 class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+
     queryset = User.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [IsAdminUser]
@@ -65,3 +69,29 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+
+
+class UserDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        orders = Order.objects.filter(user=user)
+
+        data = {
+            "total_orders": orders.count(),
+            "pending_orders": orders.filter(
+                status="Pending"
+            ).count(),
+            "completed_orders": orders.filter(
+                status="Delivered"
+            ).count(),
+            "cancelled_orders": orders.filter(
+                status="Cancelled"
+            ).count(),
+        }
+
+        return Response(data)    
