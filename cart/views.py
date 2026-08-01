@@ -1,5 +1,3 @@
-from .serializers import CartSyncSerializer
-from rest_framework.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import status
 from rest_framework.exceptions import NotFound, ValidationError
@@ -13,7 +11,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from products.models import Product
-
 from .models import Cart, CartItem
 from .serializers import (
     CartItemSerializer,
@@ -22,9 +19,9 @@ from .serializers import (
 )
 
 
-
+# ✅ ADD TO CART
 class AddToCartView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
 
@@ -42,11 +39,17 @@ class AddToCartView(APIView):
         except Product.DoesNotExist:
             raise NotFound("Product not found.")
 
-        if product.stock < quantity:
-            return Response(
-                {"error": "Insufficient stock."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # ✅ OUT OF STOCK
+        if product.stock <= 0:
+            raise ValidationError({
+                "stock_error": f"{product.name} is out of stock."
+            })
+
+        # ✅ INSUFFICIENT STOCK
+        if quantity > product.stock:
+            raise ValidationError({
+                "stock_error": f"Only {product.stock} item(s) available for {product.name}."
+            })
 
         cart, _ = Cart.objects.get_or_create(user=request.user)
 
@@ -59,10 +62,9 @@ class AddToCartView(APIView):
             cart_item.quantity = quantity
         else:
             if (cart_item.quantity + quantity) > product.stock:
-                return Response(
-                    {"error": "Stock limit exceeded."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                raise ValidationError({
+                    "stock_error": f"Only {product.stock} item(s) available for {product.name}."
+                })
 
             cart_item.quantity += quantity
 
@@ -71,6 +73,7 @@ class AddToCartView(APIView):
         return Response({"message": "Product added to cart."})
 
 
+# ✅ VIEW CART
 class ViewCartView(RetrieveAPIView):
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
@@ -80,6 +83,7 @@ class ViewCartView(RetrieveAPIView):
         return cart
 
 
+# ✅ UPDATE CART ITEM
 class UpdateCartItemView(UpdateAPIView):
     serializer_class = CartItemSerializer
     permission_classes = [IsAuthenticated]
@@ -102,12 +106,22 @@ class UpdateCartItemView(UpdateAPIView):
 
         product = serializer.instance.product
 
+        # ✅ OUT OF STOCK
+        if product.stock <= 0:
+            raise ValidationError({
+                "stock_error": f"{product.name} is out of stock."
+            })
+
+        # ✅ LIMITED STOCK
         if quantity > product.stock:
-            raise ValidationError("Requested quantity exceeds stock.")
+            raise ValidationError({
+                "stock_error": f"Only {product.stock} item(s) available for {product.name}."
+            })
 
         serializer.save(quantity=quantity)
 
 
+# ✅ REMOVE ITEM
 class RemoveFromCartView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -121,18 +135,19 @@ class RemoveFromCartView(DestroyAPIView):
             raise NotFound("Cart item not found.")
 
 
+# ✅ CLEAR CART
 class ClearCartView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request):
 
         cart, _ = Cart.objects.get_or_create(user=request.user)
-
         cart.items.all().delete()
 
         return Response({"message": "Cart cleared successfully."})
 
 
+# ✅ CART SYNC (MAIN FIX HERE)
 class CartSyncView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -155,7 +170,7 @@ class CartSyncView(APIView):
             user=request.user
         )
 
-        # Purana cart hata do
+        # Purana cart delete
         cart.items.all().delete()
 
         for item in serializer.validated_data:
@@ -170,10 +185,17 @@ class CartSyncView(APIView):
                     f"Product {item['product_id']} not found."
                 )
 
+            # ✅ OUT OF STOCK FIX
+            if product.stock <= 0:
+                raise ValidationError({
+                    "stock_error": f"{product.name} is out of stock."
+                })
+
+            # ✅ LIMITED STOCK FIX
             if item["quantity"] > product.stock:
-                raise ValidationError(
-                    f"Only {product.stock} item(s) available for {product.name}."
-                )
+                raise ValidationError({
+                    "stock_error": f"Only {product.stock} item(s) available for {product.name}."
+                })
 
             CartItem.objects.create(
                 cart=cart,
@@ -182,8 +204,6 @@ class CartSyncView(APIView):
             )
 
         return Response(
-            {
-                "message": "Cart synced successfully."
-            },
+            {"message": "Cart synced successfully."},
             status=status.HTTP_200_OK,
         )

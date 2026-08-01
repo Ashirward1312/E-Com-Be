@@ -61,22 +61,30 @@ class CheckoutView(APIView):
                 raise ValidationError(f"{field} is required.")
 
         total_price = 0
-
         for item in cart_items:
 
             product = item.product
 
-            if not product.is_active:
-                raise ValidationError(
-                    f"{product.name} is unavailable."
-                )
 
-            if item.quantity > product.stock:
-                raise ValidationError(
-                    f"Only {product.stock} item(s) available for {product.name}."
-                )
+        if not product.is_active:
+         raise ValidationError({
+            "product_error": f"{product.name} is currently unavailable."
+            })
 
-            total_price += product.price * item.quantity
+            # ✅ HANDLE ZERO STOCK FIRST
+        if product.stock <= 0:
+            raise ValidationError({
+                "stock_error": f"{product.name} is out of stock."
+            })
+
+             # ✅ THEN CHECK QUANTITY
+        if item.quantity > product.stock:
+            raise ValidationError({
+                "stock_error": f"Only {product.stock} item(s) available for {product.name}."
+            })
+
+        total_price += product.price * item.quantity
+
 
         discount_amount = 0
         final_price = total_price - discount_amount
