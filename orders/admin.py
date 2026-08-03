@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import (
     Order,
     OrderItem,
@@ -9,16 +10,20 @@ from .models import (
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
+
     readonly_fields = (
         "product",
         "quantity",
         "price",
+        "download_count",
+        "last_downloaded_at",
     )
 
 
 class OrderStatusHistoryInline(admin.TabularInline):
     model = OrderStatusHistory
     extra = 0
+
     readonly_fields = (
         "status",
         "created_at",
@@ -30,8 +35,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     list_display = (
         "order_id",
-        "full_name",
-        "phone",
+        "user",
         "final_price",
         "payment_method",
         "payment_status",
@@ -48,9 +52,8 @@ class OrderAdmin(admin.ModelAdmin):
 
     search_fields = (
         "order_id",
-        "full_name",
-        "phone",
-        "email",
+        "user__username",
+        "user__email",
     )
 
     readonly_fields = (
@@ -71,8 +74,9 @@ class OrderItemAdmin(admin.ModelAdmin):
     list_display = (
         "order",
         "product",
-        "quantity",
         "price",
+        "download_count",
+        "last_downloaded_at",
     )
 
     search_fields = (
@@ -90,6 +94,10 @@ class OrderStatusHistoryAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = ("status",)
+    list_filter = (
+        "status",
+    )
 
-    search_fields = ("order__order_id",)
+    search_fields = (
+        "order__order_id",
+    )
