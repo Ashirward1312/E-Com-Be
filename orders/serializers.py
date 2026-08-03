@@ -195,3 +195,43 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_total_items(self, obj):
         return obj.items.count()
+
+
+class LibrarySerializer(serializers.ModelSerializer):
+
+    product_name = serializers.CharField(
+        source="product.name",
+        read_only=True,
+    )
+
+    author = serializers.CharField(
+        source="product.author",
+        read_only=True,
+    )
+
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = [
+            "id",
+            "product_name",
+            "author",
+            "image",
+            "download_count",
+        ]
+
+    def get_image(self, obj):
+
+        request = self.context.get("request")
+
+        if obj.product and obj.product.image:
+
+            if request:
+                return request.build_absolute_uri(
+                    obj.product.image.url
+                )
+
+            return obj.product.image.url
+
+        return None

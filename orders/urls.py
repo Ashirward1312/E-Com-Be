@@ -71,27 +71,39 @@ from .views import (
     UpdateOrderStatusView,
     AdminDashboardView,
     DownloadEbookView,
+    LibraryView,
+    CreatePaymentView,
+    VerifyPaymentView
 )
 
 urlpatterns = [
-
-    # ---------- Checkout ----------
 
     path(
         "checkout/",
         CheckoutView.as_view(),
     ),
 
-    # ---------- Download ----------
+    path(
+        "create-payment/",
+        CreatePaymentView.as_view(),
+    ),
+
+    path(
+        "verify-payment/",
+        VerifyPaymentView.as_view(),
+    ),
 
     path(
         "download/<int:order_item_id>/",
         DownloadEbookView.as_view(),
-        name="download-ebook",
+    ),
+
+    path(
+        "library/",
+        LibraryView.as_view(),
     ),
 
     # ---------- Admin ----------
-
     path(
         "admin/dashboard/",
         AdminDashboardView.as_view(),
@@ -113,19 +125,18 @@ urlpatterns = [
     ),
 
     # ---------- User ----------
-
     path(
         "",
         MyOrdersView.as_view(),
     ),
 
     path(
-        "<str:order_id>/",
-        OrderDetailView.as_view(),
+        "<str:order_id>/cancel/",
+        CancelOrderView.as_view(),
     ),
 
     path(
-        "<str:order_id>/cancel/",
-        CancelOrderView.as_view(),
+        "<str:order_id>/",
+        OrderDetailView.as_view(),
     ),
 ]

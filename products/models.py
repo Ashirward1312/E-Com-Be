@@ -106,8 +106,6 @@ class Product(models.Model):
         decimal_places=2,
     )
 
-    # Remove later after digital flow is complete
-    stock = models.PositiveIntegerField(default=0)
 
     pages = models.PositiveIntegerField(default=0)
 

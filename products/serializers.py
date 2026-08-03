@@ -203,7 +203,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "description",
 
             "price",
-            "stock",
             "pages",
             "language",
 
