@@ -185,6 +185,8 @@ class ProductSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
 
+    discount_percentage = serializers.IntegerField(read_only=True)
+
     images = ProductImageSerializer(
         many=True,
         read_only=True,
@@ -203,6 +205,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "description",
 
             "price",
+            "sale_price",
+            "discount_percentage",
             "pages",
             "language",
 

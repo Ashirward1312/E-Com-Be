@@ -106,6 +106,14 @@ class Product(models.Model):
         decimal_places=2,
     )
 
+    # ✅ NEW OPTIONAL SALE PRICE
+    sale_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
+
 
     pages = models.PositiveIntegerField(default=0)
 
@@ -147,6 +155,16 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
+
+    # ✅ DISCOUNT CALCULATION PROPERTY
+    @property
+    def discount_percentage(self):
+        if self.sale_price and self.sale_price < self.price:
+            discount = (
+                (self.price - self.sale_price) / self.price
+            ) * 100
+            return round(discount)
+        return 0
 
     def save(self, *args, **kwargs):
         if not self.slug:
