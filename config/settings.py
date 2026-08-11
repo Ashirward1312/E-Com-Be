@@ -88,13 +88,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "E-Books",
+        "USER": "postgres",
+        "PASSWORD": "iasveda",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -154,5 +163,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 
-RAZORPAY_KEY_ID = "rzp_test_SC9UP8h666HcoR"
-RAZORPAY_KEY_SECRET = "ke4J5ISSVCCg6qPTNBIHhMKq"
+RAZORPAY_KEY_ID = "rzp_test_TNzdQubdf6ZFW6"
+RAZORPAY_KEY_SECRET = "8xjFhyp7F29FwjaP4hx0zGZe"
