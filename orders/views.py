@@ -240,6 +240,13 @@ class CreatePaymentView(APIView):
                 "currency": razorpay_order["currency"],
 
                 "key": settings.RAZORPAY_KEY_ID,
+
+                "user": {
+                    "name": request.user.get_full_name(),
+                    "email": request.user.email,
+                    "contact": request.user.phone,
+                },
+
             },
             status=status.HTTP_200_OK,
         )
