@@ -5,7 +5,7 @@ from django.utils.text import slugify
 class Blog(models.Model):
 
    title = models.CharField(
-      max_length=255,
+      max_length=500,
    )
 
    slug = models.SlugField(
