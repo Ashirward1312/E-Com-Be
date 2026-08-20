@@ -652,63 +652,131 @@ class AdminDashboardView(APIView):
         )
 
 
-class DownloadEbookView(APIView):
+# class DownloadEbookView(APIView):
 
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, order_item_id):
+
+#         try:
+
+#             order_item = (
+#                 OrderItem.objects
+#                 .select_related(
+#                     "order",
+#                     "product",
+#                 )
+#                 .get(
+#                     id=order_item_id,
+#                     order__user=request.user,
+#                 )
+#             )
+
+#         except OrderItem.DoesNotExist:
+
+#             raise NotFound(
+#                 "Purchase not found."
+#             )
+
+#         if order_item.order.payment_status != "paid":
+#             raise ValidationError(
+#                 "Payment is pending."
+#             )
+
+#         if not order_item.product:
+#             raise ValidationError(
+#                 "Book not found."
+#             )
+
+#         if not order_item.product.ebook_file:
+#             raise ValidationError(
+#                 "E-book file not available."
+#             )
+
+#         order_item.download_count += 1
+#         order_item.last_downloaded_at = timezone.now()
+
+#         order_item.save(
+#             update_fields=[
+#                 "download_count",
+#                 "last_downloaded_at",
+#             ]
+#         )
+
+#         return FileResponse(
+#             order_item.product.ebook_file.open(
+#                 "rb"
+#             ),
+#             as_attachment=True,
+#             filename=order_item.product.ebook_file.name.split("/")[-1],
+#         )
+
+
+class DownloadEbookView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, order_item_id):
 
-        try:
+        with transaction.atomic():
 
-            order_item = (
-                OrderItem.objects
-                .select_related(
-                    "order",
-                    "product",
+            try:
+                order_item = (
+                    OrderItem.objects
+                    .select_for_update()
+                    .get(
+                        id=order_item_id,
+                        order__user=request.user,
+                    )
                 )
-                .get(
-                    id=order_item_id,
-                    order__user=request.user,
+
+            except OrderItem.DoesNotExist:
+                raise NotFound(
+                    "Purchase not found."
                 )
+
+            # Payment check
+            if order_item.order.payment_status != "paid":
+                raise ValidationError(
+                    "Payment is pending."
+                )
+
+            # Product check
+            if not order_item.product:
+                raise ValidationError(
+                    "Book not found."
+                )
+
+            # E-book file check
+            if not order_item.product.ebook_file:
+                raise ValidationError(
+                    "E-book file not available."
+                )
+
+            # One-time download check
+            if order_item.download_count >= 1:
+                raise ValidationError(
+                    "This e-book has already been downloaded."
+                )
+
+            # Mark download
+            order_item.download_count = 1
+            order_item.last_downloaded_at = timezone.now()
+
+            order_item.save(
+                update_fields=[
+                    "download_count",
+                    "last_downloaded_at",
+                ]
             )
 
-        except OrderItem.DoesNotExist:
+            ebook_file = order_item.product.ebook_file
+            filename = ebook_file.name.split("/")[-1]
 
-            raise NotFound(
-                "Purchase not found."
-            )
-
-        if order_item.order.payment_status != "paid":
-            raise ValidationError(
-                "Payment is pending."
-            )
-
-        if not order_item.product:
-            raise ValidationError(
-                "Book not found."
-            )
-
-        if not order_item.product.ebook_file:
-            raise ValidationError(
-                "E-book file not available."
-            )
-
-        order_item.download_count += 1
-        order_item.last_downloaded_at = timezone.now()
-
-        order_item.save(
-            update_fields=[
-                "download_count",
-                "last_downloaded_at",
-            ]
-        )
-
+        # Transaction committed successfully
         return FileResponse(
-            order_item.product.ebook_file.open(
-                "rb"
-            ),
+            ebook_file.open("rb"),
             as_attachment=True,
-            filename=order_item.product.ebook_file.name.split("/")[-1],
+            filename=filename,
         )
 
 
