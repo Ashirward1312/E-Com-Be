@@ -35,7 +35,7 @@ ALLOWED_HOSTS = [
     "iasveda.in",
     "www.iasveda.in",
     "localhost",
-    "127.0.0.1",
+    "127.0.0.1", 
 ]
 
 
