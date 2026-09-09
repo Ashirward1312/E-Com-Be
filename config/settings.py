@@ -35,7 +35,7 @@ ALLOWED_HOSTS = [
     "iasveda.in",
     "www.iasveda.in",
     "localhost",
-    "127.0.0.1", 
+    "127.0.0.1",
 ]
 
 
@@ -151,6 +151,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    ),
+
+
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
@@ -165,7 +171,6 @@ MEDIA_URL = '/media/'
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR / "media")
 CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False") == "True"
-
 
 
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
