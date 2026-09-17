@@ -1,15 +1,16 @@
 from django.urls import path
 
 from .views import (
-    BlogListCreateView,
+    BlogView,
     BlogDetailView,
 )
+
 
 urlpatterns = [
 
     path(
         "",
-        BlogListCreateView.as_view(),
+        BlogView.as_view(),
     ),
 
     path(
