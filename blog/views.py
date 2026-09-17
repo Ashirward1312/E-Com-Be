@@ -55,7 +55,6 @@ class BlogListCreateView(generics.ListCreateAPIView):
 class BlogDetailView(generics.RetrieveUpdateDestroyAPIView):
 
    serializer_class = BlogSerializer
-   lookup_field = "slug"
 
    parser_classes = [
       MultiPartParser,
