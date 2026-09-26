@@ -32,6 +32,8 @@ urlpatterns = [
     path("api/orders/", include("orders.urls")),
 
     path("api/blogs/", include("blog.urls")),
+
+    path("api/quizzes/", include("quiz.urls")),
 ]
 
 if settings.DEBUG:
